@@ -8,13 +8,13 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from pylab import meshgrid,cm,imshow,contour,clabel,colorbar,axis,title,show
 
-def calculate_digits_count(MIN, max, precision):
-    parts_count = (max - MIN) * pow(10, precision)
+def calculate_digits_count(min, max, precision):
+    parts_count = (max - min) * pow(10, precision)
     return math.ceil(math.log(parts_count,2))
 
 def convert_to_float(gen):
     int_gen = 0
-    for i in range((len(gen) - 1), 0, -1):
+    for i in range((len(gen) - 1), -1, -1):
         int_gen += gen[i] * pow(2, i)
     return Config.MIN + int_gen * (Config.MAX - Config.MIN) / (pow(2, len(gen)) - 1)
 
@@ -27,8 +27,8 @@ class Config:
     MUTATION_PROB = 0.01
     STEPS = 50
     GENES_COUNT = 2
-    FITNESS_FUNCTION = lambda x : pow(x[0], 2)
-    GEN_SIZE = calculate_digits_count(MIN, MAX, PARENTS_COUNT)
+    FITNESS_FUNCTION = lambda x : pow(x[0]*x[1], 2)
+    GEN_SIZE = calculate_digits_count(MIN, MAX, PRECISION)
 
 class Gen:
     def __init__(self, size, value=None):
@@ -65,7 +65,8 @@ class Population:
         rand_a = random.uniform(1, 2)
         rand_b = 2 - rand_a
         for key, chromosome in enumerate(self.chromosomes):
-            chromosome.select_prob = (1 / Config.POPULATION_COUNT) * (rand_a - (rand_a - rand_b) * (key - 1) / (Config.POPULATION_COUNT - 1))
+            chromosome.select_prob = (1 / Config.POPULATION_COUNT) * ((rand_a - ((rand_a - rand_b) * (key - 1) / (Config.POPULATION_COUNT - 1))))
+
 
     def sort_by_select_prob(self):
         self.chromosomes = sorted(self.chromosomes, key=lambda chromosome: chromosome.select_prob, reverse=True)
@@ -80,12 +81,12 @@ class Population:
     def generate_chromosome(self, first_parent_genes, second_parent_genes, crossing_points):
         genes = []
         for i in range(Config.GENES_COUNT):
-            genes.append(Gen(Config.GEN_SIZE, first_parent_genes[i].value[:crossing_points[i]] + first_parent_genes[i].value[crossing_points[i]:]))
+            genes.append(Gen(Config.GEN_SIZE, first_parent_genes[i].value[:crossing_points[i]] + second_parent_genes[i].value[crossing_points[i]:]))
         self.new_chromosomes.append(Chromosome(genes))
 
     def generate_new_chromosomes(self):
         for parent_combination in self.parent_combinations:
-            crossing_points = [random.randint(0, (Config.GEN_SIZE - 1)) for _ in range(Config.GENES_COUNT)]
+            crossing_points = [random.randint(1, (Config.GEN_SIZE - 1)) for _ in range(Config.GENES_COUNT)]
             self.generate_chromosome(parent_combination['first_parent'].genes, parent_combination['second_parent'].genes, crossing_points)
 
     def mutate(self):
