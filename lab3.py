@@ -4,6 +4,14 @@ from matplotlib import pyplot as plt
 import time
 from scipy.spatial.distance import cdist
 
+
+class Config:
+    POPULATION_COUNT = 100
+    PARENTS_COUNT = 40
+    MUTATION_PROB = 0.01
+    STEPS = 100
+    NUM_NODES = 15
+    
 class Edge:
     def __init__(self, node_1, node_2, weight):
         self.node_1 = node_1
@@ -12,33 +20,24 @@ class Edge:
 
 class Site:
     def __init__(self, nodes):
-        self.num_nodes = len(nodes)
         self.nodes = nodes
         self.edges = [
-            [None] * self.num_nodes for _ in range(self.num_nodes)]
-        for i in range(self.num_nodes):
-            for j in range(i + 1, self.num_nodes):
+            [None] * Config.NUM_NODES for _ in range(Config.NUM_NODES)]
+        for i in range(Config.NUM_NODES):
+            for j in range(i + 1, Config.NUM_NODES):
                 self.edges[i][j] = self.edges[j][i] = Edge(i, j, math.sqrt(
                     pow(self.nodes[i][0] - self.nodes[j][0], 2.0) + pow(self.nodes[i][1] - self.nodes[j][1], 2.0)))
 
     def get_tour(self):
-        node_indexes = list(range(self.num_nodes))
+        node_indexes = list(range(Config.NUM_NODES))
         random.shuffle(node_indexes)
         return node_indexes
 
     def get_distance(self, tour):
         distance = 0.0
-        for i in range(self.num_nodes):
-            distance += self.edges[tour[i]
-                                   ][tour[(i + 1) % self.num_nodes]].weight
+        for i in range(Config.NUM_NODES):
+            distance += self.edges[tour[i]][tour[(i + 1) % Config.NUM_NODES]].weight
         return distance
-
-class Config:
-    POPULATION_COUNT = 100
-    PARENTS_COUNT = 40
-    MUTATION_PROB = 0.01
-    STEPS = 100
-    NUM_NODES = 15
 
 class Chromosome:
     def __init__(self, site, tour=None):
@@ -59,7 +58,6 @@ class Population:
         self.parents = []
         self.parent_combinations = []
         self.new_chromosomes = []
-        self.best_chromosome = None
         self.site = site
 
     def sort_by_fitness_value(self):
@@ -83,7 +81,6 @@ class Population:
 
     def is_valid_tour(self, tour):
         return len(tour) == len(list(set(tour)))
-
 
     def generate_new_chromosomes(self):
         for parent_combination in self.parent_combinations:
